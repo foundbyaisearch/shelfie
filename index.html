@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shelfie · Get your products picked by AI</title>
+<meta name="description" content="Shelfie shows you whether AI shopping assistants like ChatGPT and Google can find and recommend your products, then fixes what is holding you back. Built for Shopify.">
+<style>
+  :root{
+    --green:#1f8f5f; --green-d:#16704a; --green-l:#e8f6ef; --green-tint:#f3faf6;
+    --ink:#1a1c1d; --ink2:#42474b; --muted:#6b7280; --muted2:#9aa1a9;
+    --line:#e5e8eb; --line2:#eef1f3; --bg:#ffffff; --bg2:#f6f8f9; --card:#ffffff;
+    --star:#ffb43a; --warn:#e8a33d; --warnbg:#fdf4e3; --bad:#d8553f; --badbg:#fbecea;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px -8px rgba(16,24,40,.12);
+    --shadow-lg:0 24px 60px -24px rgba(16,24,40,.28);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  h1,h2,h3{letter-spacing:-.02em}
+  .sub{color:var(--ink2)}
+
+  /* NAV */
+  nav{border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:50}
+  .navin{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+  .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:20px}
+  .logo .mark{width:30px;height:30px;border-radius:8px;background:var(--green);display:grid;place-items:center;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+  .logo .mark svg{display:block}
+  .navlinks{display:flex;align-items:center;gap:26px;font-size:14.5px;color:var(--ink2)}
+  .navlinks a{text-decoration:none;color:var(--ink2)}
+  .navlinks a:hover{color:var(--ink)}
+  .btn{font-weight:700;border-radius:9px;cursor:pointer;font-size:14.5px;border:none;padding:10px 18px;transition:.15s}
+  .btn-primary{background:var(--green);color:#fff}
+  .btn-primary:hover{background:var(--green-d)}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--muted2)}
+
+  /* HERO */
+  .hero{padding:60px 0 30px;text-align:center;background:radial-gradient(1100px 360px at 50% -60px,var(--green-tint),#fff)}
+  .pill{display:inline-flex;align-items:center;gap:7px;background:var(--green-l);color:var(--green-d);font-weight:700;font-size:13px;padding:6px 13px;border-radius:999px}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block}
+  .hero h1{font-size:50px;line-height:1.05;font-weight:800;max-width:780px;margin:18px auto 0}
+  .hero p.lede{font-size:19px;color:var(--ink2);max-width:600px;margin:18px auto 0}
+  .herocta{display:flex;gap:12px;justify-content:center;margin-top:26px;flex-wrap:wrap}
+  .herocta .btn{padding:13px 26px;font-size:15.5px}
+  .stars-row{display:flex;align-items:center;gap:10px;justify-content:center;margin-top:18px;font-size:13.5px;color:var(--muted)}
+  .stars{color:var(--star);letter-spacing:1px;font-size:15px}
+  .stars-row b{color:var(--ink)}
+  .built{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:13px;color:var(--muted);font-weight:600}
+  .built .sh{width:16px;height:16px;border-radius:4px;background:#95bf47;display:inline-block;position:relative}
+
+  /* SIM */
+  .simshell{margin:34px auto 0;max-width:920px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-lg);overflow:hidden}
+  .browserbar{display:flex;align-items:center;gap:8px;padding:11px 16px;background:var(--bg2);border-bottom:1px solid var(--line)}
+  .browserbar .b{width:11px;height:11px;border-radius:50%;background:#dfe3e7}
+  .browserbar .url{margin-left:10px;font-size:12.5px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:7px;padding:4px 12px;flex:1;max-width:420px}
+  .simbody{padding:26px}
+  .simlabel{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+  .simlabel h2{font-size:20px}
+  .simlabel .pico{font-size:12.5px;color:var(--muted)}
+  .storepick{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--ink2);margin-bottom:14px;flex-wrap:wrap}
+  .storepick select{background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13.5px;font-weight:600;color:var(--ink)}
+  .askbar{display:flex;gap:10px}
+  .askbar input{flex:1;border:1.5px solid var(--line);border-radius:11px;padding:14px 16px;font-size:15.5px;color:var(--ink)}
+  .askbar input:focus{outline:none;border-color:var(--green)}
+  .askbar .btn{padding:0 24px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{font-size:13px;color:var(--ink2);background:#fff;border:1px solid var(--line);padding:7px 13px;border-radius:999px;cursor:pointer;transition:.15s}
+  .chip:hover{border-color:var(--green);color:var(--green-d);background:var(--green-tint)}
+
+  .agent{margin-top:22px;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:none;background:#fff}
+  .agent.show{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .agenttop{display:flex;align-items:center;gap:9px;padding:13px 18px;background:var(--bg2);border-bottom:1px solid var(--line);font-size:13px;color:var(--ink2);font-weight:600}
+  .agenttop .av{width:24px;height:24px;border-radius:6px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:800}
+  .agentmsg{padding:18px}
+  .agentmsg .lead{font-size:14.5px;color:var(--ink);margin-bottom:14px}
+  .rec{display:flex;gap:13px;padding:14px;border:1px solid var(--line);border-radius:11px;margin-bottom:10px}
+  .rec .rank{width:25px;height:25px;flex:none;border-radius:50%;background:var(--bg2);display:grid;place-items:center;font-weight:800;font-size:13px;color:var(--muted)}
+  .rec .name{font-weight:700;font-size:14.5px}
+  .rec .why{font-size:13px;color:var(--ink2);margin-top:3px}
+  .rec .brand{font-size:11px;color:var(--muted2);margin-top:6px;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+  .miss{border:1.5px dashed var(--bad);background:var(--badbg);border-radius:11px;padding:15px;margin-top:6px}
+  .miss .h{font-weight:800;color:var(--bad);font-size:14.5px;display:flex;align-items:center;gap:8px}
+  .miss .h .x{width:20px;height:20px;border-radius:50%;background:#d8553f;color:#fff;display:grid;place-items:center;font-size:12px}
+  .miss .d{font-size:13.5px;color:var(--ink2);margin-top:8px}
+  .miss .d b{color:var(--ink)}
+
+  .verdict{display:none;margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:20px 22px;background:var(--green-tint)}
+  .verdict.show{display:block;animation:fade .45s ease .15s both}
+  .vtop{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .ringwrap{display:flex;align-items:center;gap:15px}
+  .ring{width:72px;height:72px;flex:none}
+  .ring text{font:800 21px -apple-system,sans-serif;fill:var(--ink)}
+  .ringwrap .lbl{font-size:13px;color:var(--ink2)}
+  .ringwrap .lbl b{display:block;font-size:16px;color:var(--ink);font-weight:800}
+  .loss{margin-top:14px;font-size:13.5px;color:var(--ink2);border-top:1px solid #d3e7dc;padding-top:13px}
+  .loss b{color:var(--green-d)}
+  .pnote{margin-top:18px;font-size:12.5px;color:var(--muted);background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:11px 14px}
+
+  /* LOGOS STRIP */
+  .logos{padding:30px 0;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2);background:var(--bg2)}
+  .logos .cap{text-align:center;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2);font-weight:700}
+  .logos .row{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin-top:16px;align-items:center}
+  .logos .row span{font-weight:800;font-size:17px;color:#b3bac1}
+
+  /* SECTIONS */
+  section.blk{padding:64px 0}
+  .eyebrow{text-align:center;font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--green);font-weight:800}
+  .blk h2.big{text-align:center;font-size:34px;font-weight:800;margin-top:10px}
+  .blk p.cintro{text-align:center;color:var(--ink2);font-size:17px;max-width:620px;margin:12px auto 0}
+
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:42px}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:26px;box-shadow:var(--shadow)}
+  .step .n{width:34px;height:34px;border-radius:9px;background:var(--green-l);color:var(--green-d);display:grid;place-items:center;font-weight:800;font-size:15px}
+  .step h3{font-size:17px;margin-top:15px}
+  .step p{font-size:14.5px;color:var(--ink2);margin-top:8px}
+
+  /* AUDIT */
+  .audit{margin-top:32px;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+  .arow{display:grid;grid-template-columns:1.5fr .8fr 2fr .7fr;gap:12px;padding:15px 20px;border-bottom:1px solid var(--line2);align-items:center;font-size:14px}
+  .arow:last-child{border-bottom:none}
+  .arow.head{background:var(--bg2);color:var(--muted);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700}
+  .sku{font-weight:700}
+  .stat{font-weight:700;font-size:12px;padding:4px 10px;border-radius:7px;display:inline-block}
+  .s-ok{color:var(--green-d);background:var(--green-l)}
+  .s-warn{color:var(--warn);background:var(--warnbg)}
+  .s-bad{color:var(--bad);background:var(--badbg)}
+  .iss{color:var(--ink2);font-size:13px}
+  .fixbtn{font-size:12.5px;font-weight:700;border:1px solid var(--green);color:var(--green-d);background:#fff;border-radius:8px;padding:7px 13px;cursor:pointer}
+  .fixbtn:hover{background:var(--green-tint)}
+  .fixbtn.done{border-color:var(--green-l);color:var(--green-d);background:var(--green-l);cursor:default}
+
+  /* FIX */
+  .fixwrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:34px}
+  .codecard{border:1px solid var(--line);border-radius:13px;overflow:hidden;box-shadow:var(--shadow)}
+  .codecard .ch{padding:12px 16px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid var(--line)}
+  .codecard.before .ch{color:var(--bad);background:var(--badbg)}
+  .codecard.after .ch{color:var(--green-d);background:var(--green-l)}
+  .codecard pre{margin:0;padding:16px;font-size:12px;font-family:ui-monospace,Menlo,monospace;color:var(--ink2);overflow-x:auto;line-height:1.7;background:#fbfcfd}
+  .codecard .add{color:var(--green-d);font-weight:600}
+
+  /* TESTIMONIALS */
+  .tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:42px}
+  .tcard{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:24px;box-shadow:var(--shadow)}
+  .tcard .ts{color:var(--star);font-size:15px;letter-spacing:1px}
+  .tcard p{font-size:14.5px;color:var(--ink);margin-top:12px}
+  .tcard .who{display:flex;align-items:center;gap:11px;margin-top:16px}
+  .tcard .ava{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;font-size:14px}
+  .tcard .who .nm{font-weight:700;font-size:13.5px}
+  .tcard .who .rl{font-size:12.5px;color:var(--muted)}
+
+  /* PRICING */
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:42px;align-items:start}
+  .tier{border:1px solid var(--line);border-radius:16px;padding:28px;background:#fff;box-shadow:var(--shadow)}
+  .tier.feat{border:2px solid var(--green);position:relative;box-shadow:var(--shadow-lg)}
+  .tier.feat:before{content:"MOST POPULAR";position:absolute;top:-11px;left:28px;background:var(--green);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:4px 11px;border-radius:7px}
+  .tier .tn{font-weight:800;font-size:17px}
+  .tier .pr{font-size:38px;font-weight:800;margin:10px 0 0;letter-spacing:-.03em}
+  .tier .pr span{font-size:15px;color:var(--muted);font-weight:600}
+  .tier .pd{font-size:13px;color:var(--muted);margin-top:4px}
+  .tier ul{list-style:none;margin:18px 0 0;font-size:14px}
+  .tier li{padding:7px 0;color:var(--ink2);display:flex;gap:9px;align-items:flex-start}
+  .tier li svg{flex:none;margin-top:3px}
+  .tier .pick{width:100%;margin-top:20px}
+
+  .finalcta{text-align:center;background:var(--green-tint);border-top:1px solid var(--line2)}
+  .finalcta h2{font-size:32px;font-weight:800}
+  .finalcta p{color:var(--ink2);font-size:17px;margin-top:12px}
+
+  footer{padding:36px 0;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+  .foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+
+  /* ONBOARDING MODAL */
+  .ob-overlay{position:fixed;inset:0;background:rgba(16,24,40,.55);backdrop-filter:blur(3px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+  .ob-overlay.open{display:flex;animation:obfade .2s ease}
+  @keyframes obfade{from{opacity:0}to{opacity:1}}
+  .ob-modal{background:#fff;border-radius:18px;width:100%;max-width:520px;box-shadow:0 30px 80px -20px rgba(16,24,40,.5);overflow:hidden;animation:obpop .25s cubic-bezier(.2,.8,.3,1)}
+  @keyframes obpop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+  .ob-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line)}
+  .ob-head .logo{font-size:17px}
+  .ob-close{background:none;border:none;font-size:22px;color:var(--muted2);cursor:pointer;line-height:1;padding:4px}
+  .ob-close:hover{color:var(--ink)}
+  .ob-prog{display:flex;gap:6px;padding:14px 22px 0}
+  .ob-prog .seg{height:4px;flex:1;border-radius:3px;background:var(--line)}
+  .ob-prog .seg.on{background:var(--green)}
+  .ob-body{padding:24px 26px 28px}
+  .ob-step{display:none}
+  .ob-step.active{display:block;animation:obfade .25s ease}
+  .ob-ico{width:54px;height:54px;border-radius:14px;background:var(--green-l);display:grid;place-items:center;margin-bottom:16px}
+  .ob-body h3{font-size:22px;font-weight:800}
+  .ob-body p.obp{color:var(--ink2);font-size:15px;margin-top:9px}
+  .ob-field{margin-top:18px}
+  .ob-field label{font-size:13px;font-weight:700;color:var(--ink2);display:block;margin-bottom:7px}
+  .ob-input{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:11px;overflow:hidden}
+  .ob-input:focus-within{border-color:var(--green)}
+  .ob-input input{flex:1;border:none;padding:13px 14px;font-size:15px;color:var(--ink)}
+  .ob-input input:focus{outline:none}
+  .ob-input .suffix{padding:0 14px;font-size:14px;color:var(--muted);background:var(--bg2);align-self:stretch;display:flex;align-items:center;border-left:1px solid var(--line)}
+  .ob-perms{margin-top:16px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .ob-perms .ph{padding:11px 15px;background:var(--bg2);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--line)}
+  .ob-perms .pr{display:flex;gap:10px;padding:11px 15px;font-size:13.5px;color:var(--ink2);border-bottom:1px solid var(--line2)}
+  .ob-perms .pr:last-child{border-bottom:none}
+  .ob-perms .pr .ck{color:var(--green);font-weight:800}
+  .ob-btn{width:100%;margin-top:22px;padding:14px;font-size:15.5px;display:flex;align-items:center;justify-content:center;gap:9px}
+  .ob-sub{text-align:center;font-size:12.5px;color:var(--muted);margin-top:13px}
+  .ob-back{background:none;border:none;color:var(--muted);font-size:13.5px;cursor:pointer;margin-top:14px;width:100%;font-weight:600}
+  .ob-back:hover{color:var(--ink)}
+  /* scanning */
+  .scan-list{margin-top:20px}
+  .scan-item{display:flex;align-items:center;gap:12px;padding:11px 0;font-size:14.5px;color:var(--muted2);transition:.3s}
+  .scan-item.done{color:var(--ink)}
+  .scan-item.active{color:var(--ink);font-weight:600}
+  .scan-dot{width:20px;height:20px;flex:none;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:11px}
+  .scan-item.done .scan-dot{background:var(--green);border-color:var(--green);color:#fff}
+  .scan-item.active .scan-dot{border-color:var(--green);border-top-color:transparent;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .scan-bar{height:7px;background:var(--line);border-radius:5px;margin-top:22px;overflow:hidden}
+  .scan-bar i{display:block;height:100%;width:0;background:var(--green);border-radius:5px;transition:width .4s ease}
+  /* results */
+  .ob-result{text-align:center}
+  .ob-result .ring{width:120px;height:120px;margin:6px auto 0}
+  .ob-result .ring text{font:800 30px -apple-system,sans-serif;fill:var(--ink)}
+  .res-stats{display:flex;gap:10px;margin-top:18px}
+  .res-stat{flex:1;border:1px solid var(--line);border-radius:12px;padding:14px 10px;text-align:center}
+  .res-stat b{display:block;font-size:24px;font-weight:800}
+  .res-stat span{font-size:12px;color:var(--muted)}
+  .res-stat.bad b{color:var(--bad)} .res-stat.warn b{color:var(--warn)} .res-stat.ok b{color:var(--green-d)}
+  .res-loss{background:var(--warnbg);border:1px solid #f0dcae;border-radius:11px;padding:13px 15px;font-size:13.5px;color:var(--ink2);margin-top:16px}
+  .res-loss b{color:var(--bad)}
+  /* plan */
+  .plan-pick{border:1.5px solid var(--line);border-radius:12px;padding:15px 16px;margin-top:12px;display:flex;align-items:center;gap:13px;cursor:pointer;transition:.15s}
+  .plan-pick:hover{border-color:var(--green)}
+  .plan-pick.sel{border-color:var(--green);background:var(--green-tint)}
+  .plan-pick .radio{width:20px;height:20px;flex:none;border-radius:50%;border:2px solid var(--muted2);display:grid;place-items:center}
+  .plan-pick.sel .radio{border-color:var(--green)}
+  .plan-pick.sel .radio:after{content:"";width:10px;height:10px;border-radius:50%;background:var(--green)}
+  .plan-pick .pn{font-weight:800;font-size:15px}
+  .plan-pick .pdsc{font-size:12.5px;color:var(--muted)}
+  .plan-pick .pp{margin-left:auto;font-weight:800;font-size:16px}
+  .plan-pick .pp span{font-size:12px;color:var(--muted);font-weight:600}
+  .ob-done-ico{width:64px;height:64px;border-radius:50%;background:var(--green);display:grid;place-items:center;margin:0 auto 4px}
+  .ob-result.center{text-align:center}
+  @media(max-width:780px){
+    .hero h1{font-size:34px}.navlinks .nl{display:none}
+    .steps,.tgrid,.tiers,.fixwrap{grid-template-columns:1fr}
+    .arow{grid-template-columns:1.3fr .8fr}.arow .iss,.arow.head span:nth-child(3){display:none}
+    .arow>*:nth-child(4){grid-column:2;text-align:left}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap navin">
+    <div class="logo">
+      <span class="mark"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="19" cy="17" r="2.3" fill="#fff"/></svg></span>
+      Shelfie
+    </div>
+    <div class="navlinks">
+      <a href="#how" class="nl">How it works</a>
+      <a href="#pricing" class="nl">Pricing</a>
+      <a href="#reviews" class="nl">Reviews</a>
+      <button class="btn btn-primary" onclick="goSim()">Check my store free</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="wrap">
+    <span class="pill"><span class="dot"></span> New in 2026 · Works with ChatGPT, Google AI &amp; Copilot</span>
+    <h1>Get your products picked by AI.</h1>
+    <p class="lede">Shoppers are asking AI assistants what to buy. Shelfie shows you if yours come up, and fixes the product data that keeps them hidden.</p>
+    <div class="herocta">
+      <button class="btn btn-primary" onclick="goSim()">Check my store free</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">See how it works</button>
+    </div>
+    <div class="stars-row"><span class="stars">★★★★★</span> <b>4.9</b> · 870 reviews on the Shopify App Store</div>
+    <div class="built"><span class="sh"></span> Built for Shopify · Free to install</div>
+
+    <!-- SIMULATOR -->
+    <div class="simshell" id="sim">
+      <div class="browserbar"><span class="b"></span><span class="b"></span><span class="b"></span><span class="url">shelfie.app/scan</span></div>
+      <div class="simbody">
+        <div class="simlabel">
+          <h2>See what the AI says about your store</h2>
+          <span class="pico">Live demo</span>
+        </div>
+        <div class="storepick">
+          Try it with a sample store:
+          <select id="store" onchange="resetSim()">
+            <option value="trailpeak">TrailPeak Outdoors (hiking &amp; camping)</option>
+            <option value="lumastudio">Luma Studio (skincare &amp; beauty)</option>
+            <option value="brewhaus">BrewHaus (coffee gear)</option>
+          </select>
+        </div>
+        <div class="askbar">
+          <input id="q" placeholder="Ask like a shopper: best waterproof hiking boots under $150" />
+          <button class="btn btn-primary" id="askBtn" onclick="ask()">Ask the AI</button>
+        </div>
+        <div class="chips" id="chips"></div>
+
+        <div class="agent" id="agent">
+          <div class="agenttop"><span class="av">AI</span> <span id="agentLabel">AI shopping assistant</span></div>
+          <div class="agentmsg" id="agentMsg"></div>
+        </div>
+
+        <div class="verdict" id="verdict">
+          <div class="vtop">
+            <div class="ringwrap">
+              <svg class="ring" viewBox="0 0 36 36" id="ringSvg"></svg>
+              <div class="lbl">Your AI Visibility Score<b id="scoreLbl">--</b><span id="scoreSub" style="color:var(--muted2);font-size:12px"></span></div>
+            </div>
+            <button class="btn btn-primary" onclick="openOb()">Fix this for me</button>
+          </div>
+          <div class="loss" id="loss"></div>
+        </div>
+
+        <div class="pnote">This is a live demo with sample data so you can see how it feels. Once you install Shelfie, it runs this on your real catalog and asks real AI assistants.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGO STRIP -->
+<div class="logos">
+  <div class="wrap">
+    <div class="cap">Tracks the assistants your shoppers already use</div>
+    <div class="row"><span>ChatGPT</span><span>Google AI</span><span>Perplexity</span><span>Copilot</span><span>Gemini</span></div>
+  </div>
+</div>
+
+<!-- HOW -->
+<section class="blk" id="how">
+  <div class="wrap">
+    <div class="eyebrow">How it works</div>
+    <h2 class="big">Three steps. No developer needed.</h2>
+    <p class="cintro">You install it like any other Shopify app. Shelfie does the technical part so you do not have to touch a single line of code.</p>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Connect your store</h3><p>One click from the Shopify App Store. Shelfie reads your product catalog automatically. Setup takes about two minutes.</p></div>
+      <div class="step"><div class="n">2</div><h3>See where you stand</h3><p>We ask real AI assistants what shoppers ask, then show you which of your products show up and which ones get skipped, and why.</p></div>
+      <div class="step"><div class="n">3</div><h3>Fix it in one click</h3><p>Shelfie writes the structured product data the AI needs and keeps it updated as the rules change. Your products start getting recommended.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- AUDIT -->
+<section class="blk" style="background:var(--bg2)">
+  <div class="wrap">
+    <div class="eyebrow">The diagnosis</div>
+    <h2 class="big">Know exactly which products are invisible</h2>
+    <p class="cintro">Other tools tell you if your brand name gets mentioned. Shelfie checks every product you sell and tells you what is missing.</p>
+    <div class="audit" id="audit"></div>
+  </div>
+</section>
+
+<!-- FIX -->
+<section class="blk">
+  <div class="wrap">
+    <div class="eyebrow">The fix</div>
+    <h2 class="big">From skipped to recommended</h2>
+    <p class="cintro">Here is a real before and after for one product. The left is what the AI sees today. The right is what Shelfie builds for you.</p>
+    <div class="fixwrap">
+      <div class="codecard before"><div class="ch">Before · what the AI sees today</div><pre id="codeBefore"></pre></div>
+      <div class="codecard after"><div class="ch">After · what Shelfie builds</div><pre id="codeAfter"></pre></div>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section class="blk" id="reviews" style="background:var(--bg2)">
+  <div class="wrap">
+    <div class="eyebrow">Loved by merchants</div>
+    <h2 class="big">Stores are already winning the AI shelf</h2>
+    <p class="cintro">★★★★★ 4.9 average from 870 reviews on the Shopify App Store.</p>
+    <div class="tgrid">
+      <div class="tcard"><div class="ts">★★★★★</div><p>"I had no idea ChatGPT was sending my competitors sales until Shelfie showed me. Two weeks after the fix, my bestseller started showing up in answers. This pays for itself."</p><div class="who"><div class="ava" style="background:#1f8f5f">M</div><div><div class="nm">Maya R.</div><div class="rl">Founder, outdoor gear store</div></div></div></div>
+      <div class="tcard"><div class="ts">★★★★★</div><p>"The setup really was two minutes. I am not technical at all and it just worked. The score going up every week is weirdly addictive."</p><div class="who"><div class="ava" style="background:#3a6ea5">D</div><div><div class="nm">Daniel K.</div><div class="rl">Owner, coffee equipment shop</div></div></div></div>
+      <div class="tcard"><div class="ts">★★★★★</div><p>"We run 11 client stores. Shelfie is now part of our standard setup. The white-label reports make us look great in client calls."</p><div class="who"><div class="ava" style="background:#8a5cf6">P</div><div><div class="nm">Priya N.</div><div class="rl">Agency, ecommerce growth</div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="blk" id="pricing">
+  <div class="wrap">
+    <div class="eyebrow">Pricing</div>
+    <h2 class="big">Free to check. Simple to fix.</h2>
+    <p class="cintro">Your visibility score is free forever. You only pay when you want Shelfie to fix and maintain your product data automatically.</p>
+    <div class="tiers">
+      <div class="tier">
+        <div class="tn">Starter</div>
+        <div class="pr">$39<span>/mo</span></div>
+        <div class="pd">For a single growing store</div>
+        <ul>
+          <li>✓ 1 store</li>
+          <li>✓ Monthly product data refresh</li>
+          <li>✓ Visibility score and alerts</li>
+          <li>✓ ChatGPT and Perplexity tracking</li>
+        </ul>
+        <button class="btn btn-ghost pick" onclick="goSim()">Start free</button>
+      </div>
+      <div class="tier feat">
+        <div class="tn">Growth</div>
+        <div class="pr">$99<span>/mo</span></div>
+        <div class="pd">For stores serious about AI sales</div>
+        <ul>
+          <li>✓ Everything in Starter</li>
+          <li>✓ Always-on monitoring</li>
+          <li>✓ AI writes your product details</li>
+          <li>✓ Feeds for Google, Copilot and more</li>
+          <li>✓ See how you rank against rivals</li>
+        </ul>
+        <button class="btn btn-primary pick" onclick="goSim()">Start free</button>
+      </div>
+      <div class="tier">
+        <div class="tn">Agency</div>
+        <div class="pr">$299<span>/mo</span></div>
+        <div class="pd">For agencies and multi-store brands</div>
+        <ul>
+          <li>✓ Up to 25 stores</li>
+          <li>✓ White-label client reports</li>
+          <li>✓ Bulk fixes across stores</li>
+          <li>✓ Priority support</li>
+        </ul>
+        <button class="btn btn-ghost pick" onclick="goSim()">Talk to us</button>
+      </div>
+    </div>
+    <p style="text-align:center;color:var(--muted);font-size:13px;margin-top:20px">No setup fees. Cancel anytime. 14 day free trial on every paid plan.</p>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="blk finalcta">
+  <div class="wrap">
+    <h2>Find out what the AI says about your store</h2>
+    <p>It takes two minutes and the check is free. See your score before your competitors do.</p>
+    <div class="herocta" style="margin-top:24px"><button class="btn btn-primary" style="padding:14px 30px;font-size:16px" onclick="goSim()">Check my store free</button></div>
+  </div>
+</section>
+
+<!-- ONBOARDING MODAL -->
+<div class="ob-overlay" id="ob" onclick="if(event.target===this)closeOb()">
+  <div class="ob-modal">
+    <div class="ob-head">
+      <div class="logo"><span class="mark" style="width:26px;height:26px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="19" cy="17" r="2.3" fill="#fff"/></svg></span>Shelfie</div>
+      <button class="ob-close" onclick="closeOb()">×</button>
+    </div>
+    <div class="ob-prog"><span class="seg" id="seg0"></span><span class="seg" id="seg1"></span><span class="seg" id="seg2"></span><span class="seg" id="seg3"></span><span class="seg" id="seg4"></span></div>
+    <div class="ob-body">
+
+      <!-- STEP 0: install -->
+      <div class="ob-step" id="ostep0">
+        <div class="ob-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="#1f8f5f" stroke-width="2.4" stroke-linecap="round"/><circle cx="19" cy="17" r="2.3" fill="#1f8f5f"/></svg></div>
+        <h3>Add Shelfie to your store</h3>
+        <p class="obp">Shelfie installs like any other Shopify app. It is free to add, and the visibility check costs nothing. You only pay if you choose a plan later.</p>
+        <div class="ob-perms">
+          <div class="ph">Shelfie will be able to</div>
+          <div class="pr"><span class="ck">✓</span> Read your products and collections</div>
+          <div class="pr"><span class="ck">✓</span> Read your store details and theme</div>
+          <div class="pr"><span class="ck">✓</span> Write structured product data (only when you approve)</div>
+        </div>
+        <button class="btn btn-primary ob-btn" onclick="obNext()"><span style="display:inline-flex;width:18px;height:18px;background:#95bf47;border-radius:4px"></span> Add app on Shopify</button>
+        <div class="ob-sub">By installing you agree to the demo terms. Sample flow, no real store connected.</div>
+      </div>
+
+      <!-- STEP 1: connect -->
+      <div class="ob-step" id="ostep1">
+        <div class="ob-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="#1f8f5f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="#1f8f5f" stroke-width="2"/></svg></div>
+        <h3>Connect your store</h3>
+        <p class="obp">Enter your store address so Shelfie knows which catalog to check. This is the same handle you use to log in to Shopify.</p>
+        <div class="ob-field">
+          <label>Your Shopify store</label>
+          <div class="ob-input"><input id="obStore" placeholder="your-store" /><span class="suffix">.myshopify.com</span></div>
+        </div>
+        <button class="btn btn-primary ob-btn" onclick="startScan()">Connect and run my free check</button>
+        <button class="ob-back" onclick="obGo(0)">Back</button>
+      </div>
+
+      <!-- STEP 2: scanning -->
+      <div class="ob-step" id="ostep2">
+        <div class="ob-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#1f8f5f" stroke-width="2"/><path d="M16 16l5 5" stroke="#1f8f5f" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+        <h3>Checking your store</h3>
+        <p class="obp" id="scanStoreLbl">Asking AI assistants what your shoppers ask, and seeing where you show up.</p>
+        <div class="scan-list">
+          <div class="scan-item" id="sc0"><span class="scan-dot">1</span> Reading your product catalog</div>
+          <div class="scan-item" id="sc1"><span class="scan-dot">2</span> Asking ChatGPT, Google AI and Perplexity</div>
+          <div class="scan-item" id="sc2"><span class="scan-dot">3</span> Checking which products show up</div>
+          <div class="scan-item" id="sc3"><span class="scan-dot">4</span> Scoring your AI visibility</div>
+        </div>
+        <div class="scan-bar"><i id="scanBar"></i></div>
+      </div>
+
+      <!-- STEP 3: results -->
+      <div class="ob-step" id="ostep3">
+        <div class="ob-result">
+          <h3 style="text-align:center">Here is your AI Visibility Score</h3>
+          <svg class="ring" viewBox="0 0 36 36" id="obRing"></svg>
+          <div class="res-stats">
+            <div class="res-stat bad"><b id="rsInv">--</b><span>Invisible</span></div>
+            <div class="res-stat warn"><b id="rsHalf">--</b><span>Half there</span></div>
+            <div class="res-stat ok"><b id="rsOk">--</b><span>Showing up</span></div>
+          </div>
+          <div class="res-loss" id="rsLoss"></div>
+        </div>
+        <button class="btn btn-primary ob-btn" onclick="obGo(4)">Fix this automatically</button>
+        <button class="ob-back" onclick="closeOb()">Maybe later</button>
+      </div>
+
+      <!-- STEP 4: plan -->
+      <div class="ob-step" id="ostep4">
+        <h3>Pick a plan to fix it</h3>
+        <p class="obp">Start free for 14 days. Shelfie writes the missing product data and keeps it updated. Cancel anytime.</p>
+        <div class="plan-pick" id="plan-starter" onclick="selPlan('starter')"><div class="radio"></div><div><div class="pn">Starter</div><div class="pdsc">1 store, monthly refresh</div></div><div class="pp">$39<span>/mo</span></div></div>
+        <div class="plan-pick sel" id="plan-growth" onclick="selPlan('growth')"><div class="radio"></div><div><div class="pn">Growth <span style="color:var(--green-d);font-size:11px">· Most popular</span></div><div class="pdsc">Always on, AI writes your data, rival tracking</div></div><div class="pp">$99<span>/mo</span></div></div>
+        <div class="plan-pick" id="plan-agency" onclick="selPlan('agency')"><div class="radio"></div><div><div class="pn">Agency</div><div class="pdsc">Up to 25 stores, white label</div></div><div class="pp">$299<span>/mo</span></div></div>
+        <button class="btn btn-primary ob-btn" onclick="obGo(5)">Start 14 day free trial</button>
+        <button class="ob-back" onclick="obGo(3)">Back to my results</button>
+      </div>
+
+      <!-- STEP 5: done -->
+      <div class="ob-step" id="ostep5">
+        <div class="ob-result center">
+          <div class="ob-done-ico"><svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3 style="text-align:center;margin-top:12px">You are all set</h3>
+          <p class="obp" id="doneMsg" style="text-align:center"></p>
+        </div>
+        <button class="btn btn-primary ob-btn" onclick="closeOb()">Go to my dashboard</button>
+        <div class="ob-sub">This is a prototype. In the live app you would land in your Shelfie dashboard now.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <div class="logo" style="font-size:17px"><span class="mark" style="width:26px;height:26px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="19" cy="17" r="2.3" fill="#fff"/></svg></span>Shelfie</div>
+    <div>Prototype · House of Turnberry · 2026. Sample data shown for demonstration.</div>
+  </div>
+</footer>
+
+<script>
+const STORES = {
+  trailpeak:{
+    name:"TrailPeak Outdoors", you:"TrailPeak Summit GTX Boot",
+    score:34, scoreSub:"Lower than most stores like yours", lostPerMo:"$4,200",
+    competitors:[
+      {name:"Salomon Quest 4 GTX", why:"Lists its waterproofing, weight, sizing and over 1,200 reviews in a format the AI can read.", brand:"Salomon"},
+      {name:"Merrell Moab 3 Waterproof", why:"Full product details with materials, terrain and live stock status.", brand:"Merrell"}
+    ],
+    youReason:"missing its waterproof rating, weight and review details, so the AI cannot confirm it matches what the shopper asked for.",
+    chips:["best waterproof hiking boots under $150","lightweight 2 person backpacking tent","warmest sleeping bag for winter"],
+    audit:[
+      {sku:"Summit GTX Boot",stat:"bad",label:"Invisible",iss:"No price data, no waterproof rating, no reviews the AI can read"},
+      {sku:"Ridgeline 2P Tent",stat:"warn",label:"Half there",iss:"Has a price, but no weight, capacity or season details"},
+      {sku:"Alpine Down Bag",stat:"bad",label:"Invisible",iss:"Description is free text with no temperature rating field"},
+      {sku:"TrailLite Daypack 22L",stat:"ok",label:"Showing up",iss:"Fully detailed and already appearing in AI answers"},
+      {sku:"Granite Trekking Poles",stat:"warn",label:"Half there",iss:"Missing material and weight, very few reviews"}
+    ],
+    before:'&lt;div class="product"&gt;\n  &lt;h1&gt;Summit GTX Boot&lt;/h1&gt;\n  &lt;p&gt;Great boots for the trail.\n     Buy now!&lt;/p&gt;\n  &lt;span&gt;$139.99&lt;/span&gt;\n&lt;/div&gt;',
+    after:'{\n  "name": "TrailPeak Summit GTX Boot",\n  <span class="add">"waterproof": "GORE-TEX, fully waterproof",</span>\n  <span class="add">"weight": "1.1 kg per pair",</span>\n  <span class="add">"material": "Nubuck leather, Vibram sole",</span>\n  "price": "139.99 USD",\n  <span class="add">"availability": "In stock",</span>\n  <span class="add">"rating": "4.6 from 312 reviews"</span>\n}'
+  },
+  lumastudio:{
+    name:"Luma Studio", you:"Luma Vitamin C Glow Serum",
+    score:41, scoreSub:"Below average for beauty stores", lostPerMo:"$3,100",
+    competitors:[
+      {name:"CeraVe Vitamin C Serum", why:"Spells out its ingredients, concentration and skin types in a format the AI understands.", brand:"CeraVe"},
+      {name:"The Ordinary Ascorbic 8%", why:"Clear concentration, who it suits and a clean price feed.", brand:"The Ordinary"}
+    ],
+    youReason:"missing its ingredient list, strength and skin type details, so the AI cannot match it to a shopper with sensitive skin.",
+    chips:["best vitamin C serum for sensitive skin","fragrance free moisturizer under $30","gentle retinol for beginners"],
+    audit:[
+      {sku:"Vitamin C Glow Serum",stat:"bad",label:"Invisible",iss:"No ingredient list, strength or skin type details"},
+      {sku:"Hydra Barrier Cream",stat:"warn",label:"Half there",iss:"Has a price, but no fragrance free or ingredient info"},
+      {sku:"Gentle Foaming Cleanser",stat:"ok",label:"Showing up",iss:"Fully detailed and already appearing in AI answers"},
+      {sku:"Overnight Retinol 0.3%",stat:"bad",label:"Invisible",iss:"Strength buried in text, nothing on who it suits"},
+      {sku:"SPF 50 Daily Fluid",stat:"warn",label:"Half there",iss:"SPF is not listed as a detail the AI can read"}
+    ],
+    before:'&lt;div class="product"&gt;\n  &lt;h1&gt;Glow Serum&lt;/h1&gt;\n  &lt;p&gt;Brightening serum with\n     vitamin C. Loved by all!&lt;/p&gt;\n  &lt;span&gt;$28&lt;/span&gt;\n&lt;/div&gt;',
+    after:'{\n  "name": "Luma Vitamin C Glow Serum",\n  <span class="add">"keyIngredient": "Vitamin C 15%",</span>\n  <span class="add">"suitableFor": ["sensitive skin","fragrance free"],</span>\n  <span class="add">"size": "30 ml serum",</span>\n  "price": "28.00 USD",\n  <span class="add">"availability": "In stock",</span>\n  <span class="add">"rating": "4.7 from 204 reviews"</span>\n}'
+  },
+  brewhaus:{
+    name:"BrewHaus", you:"BrewHaus Precision Gooseneck Kettle",
+    score:38, scoreSub:"Lower than most coffee stores", lostPerMo:"$2,700",
+    competitors:[
+      {name:"Fellow Stagg EKG Kettle", why:"Lists temperature control, capacity, wattage and over 900 reviews in a readable format.", brand:"Fellow"},
+      {name:"OXO Brew Adjustable Kettle", why:"Complete details: capacity, material, temperature range and stock status.", brand:"OXO"}
+    ],
+    youReason:"missing its capacity, wattage and temperature control details, so the AI cannot tell it is a precision pour over kettle.",
+    chips:["best gooseneck kettle for pour over","quiet burr grinder under $100","easy espresso machine for beginners"],
+    audit:[
+      {sku:"Precision Gooseneck Kettle",stat:"bad",label:"Invisible",iss:"No capacity, wattage or temperature control details"},
+      {sku:"BurrPro Conical Grinder",stat:"warn",label:"Half there",iss:"Has a price, but no grind settings or noise level"},
+      {sku:"Pour-Over Glass Dripper",stat:"ok",label:"Showing up",iss:"Fully detailed and already appearing in AI answers"},
+      {sku:"Crema Espresso Machine",stat:"bad",label:"Invisible",iss:"Specs written in text, nothing on pressure or boiler"},
+      {sku:"Insulated Carafe 1L",stat:"warn",label:"Half there",iss:"Capacity and material are not listed as readable details"}
+    ],
+    before:'&lt;div class="product"&gt;\n  &lt;h1&gt;Gooseneck Kettle&lt;/h1&gt;\n  &lt;p&gt;Perfect for pour over coffee.\n     Order today!&lt;/p&gt;\n  &lt;span&gt;$74&lt;/span&gt;\n&lt;/div&gt;',
+    after:'{\n  "name": "BrewHaus Precision Gooseneck Kettle",\n  <span class="add">"capacity": "0.9 L",</span>\n  <span class="add">"power": "1200W, variable 40 to 100C",</span>\n  <span class="add">"material": "Stainless steel",</span>\n  "price": "74.00 USD",\n  <span class="add">"availability": "In stock",</span>\n  <span class="add">"rating": "4.5 from 418 reviews"</span>\n}'
+  }
+};
+
+let current = "trailpeak";
+
+/* goSim is defined once, below, in the onboarding section (opens the Add to Shopify flow) */
+
+function renderChips(){
+  const s = STORES[current];
+  document.getElementById('chips').innerHTML =
+    s.chips.map(c=>`<span class="chip" onclick="fillChip('${c.replace(/'/g,"\\'")}')">${c}</span>`).join('');
+}
+function fillChip(t){ document.getElementById('q').value = t; ask(); }
+
+function renderAudit(){
+  const s = STORES[current];
+  const head = `<div class="arow head"><span>Product</span><span>AI status</span><span>What is missing</span><span></span></div>`;
+  const rows = s.audit.map((r,i)=>{
+    const cls = r.stat==='ok'?'s-ok':r.stat==='warn'?'s-warn':'s-bad';
+    const btn = r.stat==='ok'
+      ? `<button class="fixbtn done">Live</button>`
+      : `<button class="fixbtn" id="fx${i}" onclick="fixRow(${i})">Fix now</button>`;
+    return `<div class="arow"><span class="sku">${r.sku}</span><span><span class="stat ${cls}">${r.label}</span></span><span class="iss">${r.iss}</span><span style="text-align:right">${btn}</span></div>`;
+  }).join('');
+  document.getElementById('audit').innerHTML = head+rows;
+}
+function fixRow(i){
+  const b = document.getElementById('fx'+i);
+  if(!b) return;
+  b.textContent='Writing data...';
+  setTimeout(()=>{ b.outerHTML = `<button class="fixbtn done">Fixed</button>`; },650);
+}
+
+function renderCode(){
+  const s = STORES[current];
+  document.getElementById('codeBefore').innerHTML = s.before;
+  document.getElementById('codeAfter').innerHTML = s.after;
+}
+
+function drawRing(score){
+  const color = score<50?'#d8553f':score<75?'#e8a33d':'#1f8f5f';
+  document.getElementById('ringSvg').innerHTML = `
+    <path d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31" fill="none" stroke="#dde3e7" stroke-width="3.4"/>
+    <path d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31" fill="none" stroke="${color}" stroke-width="3.4"
+      stroke-dasharray="${score} 100" stroke-linecap="round"/>
+    <text x="18" y="22" text-anchor="middle">${score}</text>`;
+}
+
+function ask(){
+  const q = document.getElementById('q').value.trim();
+  const s = STORES[current];
+  const btn = document.getElementById('askBtn');
+  if(!q){ document.getElementById('q').focus(); document.getElementById('q').placeholder="Type a shopper question first"; return; }
+
+  btn.disabled = true; btn.textContent = "Asking...";
+  const agent = document.getElementById('agent');
+  const verdict = document.getElementById('verdict');
+  agent.classList.remove('show'); verdict.classList.remove('show');
+  document.getElementById('agentMsg').innerHTML = `<div class="lead" style="color:var(--muted)">Asking the AI assistant about "${q}"...</div>`;
+  agent.classList.add('show');
+
+  setTimeout(()=>{
+    const recs = s.competitors.map((c,i)=>`
+      <div class="rec"><div class="rank">${i+1}</div>
+        <div><div class="name">${c.name}</div><div class="why">${c.why}</div><div class="brand">${c.brand}</div></div></div>`).join('');
+    const miss = `
+      <div class="miss"><div class="h"><span class="x">✕</span> Your product did not come up</div>
+        <div class="d"><b>${s.you}</b> is in your store and fits this search, but the AI skipped it because it is ${s.youReason}</div></div>`;
+    document.getElementById('agentMsg').innerHTML =
+      `<div class="lead">Here are the best options I found for "${q}":</div>${recs}${miss}`;
+
+    drawRing(s.score);
+    document.getElementById('scoreLbl').textContent = s.score+" / 100";
+    document.getElementById('scoreSub').textContent = s.scoreSub;
+    document.getElementById('loss').innerHTML =
+      `At this score, roughly <b>$${s.lostPerMo} a month</b> in AI driven sales is going to competitors with better product data. Shelfie closes that gap for you.`;
+    verdict.classList.add('show');
+    btn.disabled=false; btn.textContent="Ask the AI";
+  }, 1050);
+}
+
+function resetSim(){
+  current = document.getElementById('store').value;
+  document.getElementById('agent').classList.remove('show');
+  document.getElementById('verdict').classList.remove('show');
+  document.getElementById('q').value="";
+  renderChips(); renderAudit(); renderCode();
+}
+
+/* ---------- ONBOARDING FLOW ---------- */
+let obStep = 0, selectedPlan = "growth";
+const PLAN_PRICE = {starter:"$39",growth:"$99",agency:"$299"};
+const PLAN_NAME = {starter:"Starter",growth:"Growth",agency:"Agency"};
+
+function openOb(){
+  obStep = 0; document.getElementById('ob').classList.add('open');
+  document.body.style.overflow='hidden'; showStep(0);
+}
+function closeOb(){
+  document.getElementById('ob').classList.remove('open');
+  document.body.style.overflow='';
+}
+function showStep(n){
+  for(let i=0;i<=5;i++){
+    const el=document.getElementById('ostep'+i);
+    if(el) el.classList.toggle('active', i===n);
+  }
+  // progress segments (5 segments map to the 6 steps, results+ count as full)
+  for(let i=0;i<5;i++){
+    document.getElementById('seg'+i).classList.toggle('on', i<=Math.min(n,4));
+  }
+}
+function obGo(n){ obStep=n; showStep(n); }
+function obNext(){ obGo(obStep+1); }
+
+function selPlan(p){
+  selectedPlan=p;
+  ['starter','growth','agency'].forEach(x=>document.getElementById('plan-'+x).classList.toggle('sel',x===p));
+}
+
+function startScan(){
+  const store=(document.getElementById('obStore').value.trim()||"your-store");
+  document.getElementById('scanStoreLbl').textContent=
+    `Checking ${store}.myshopify.com. Asking AI assistants what your shoppers ask, and seeing where you show up.`;
+  obGo(2);
+  const items=['sc0','sc1','sc2','sc3'];
+  const bar=document.getElementById('scanBar');
+  items.forEach(id=>{const e=document.getElementById(id);e.classList.remove('done','active');});
+  bar.style.width='0';
+  let i=0;
+  const run=()=>{
+    if(i>0) {document.getElementById(items[i-1]).classList.remove('active');document.getElementById(items[i-1]).classList.add('done');}
+    if(i<items.length){
+      document.getElementById(items[i]).classList.add('active');
+      bar.style.width=((i+1)/items.length*100)+'%';
+      i++; setTimeout(run,820);
+    } else { setTimeout(showResults,500); }
+  };
+  run();
+}
+
+function showResults(){
+  // use whichever demo store is selected in the simulator for realistic numbers
+  const s=STORES[current];
+  const inv=s.audit.filter(a=>a.stat==='bad').length;
+  const half=s.audit.filter(a=>a.stat==='warn').length;
+  const ok=s.audit.filter(a=>a.stat==='ok').length;
+  document.getElementById('rsInv').textContent=inv;
+  document.getElementById('rsHalf').textContent=half;
+  document.getElementById('rsOk').textContent=ok;
+  const color = s.score<50?'#d8553f':s.score<75?'#e8a33d':'#1f8f5f';
+  document.getElementById('obRing').innerHTML=`
+    <path d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31" fill="none" stroke="#dde3e7" stroke-width="3"/>
+    <path d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31" fill="none" stroke="${color}" stroke-width="3"
+      stroke-dasharray="${s.score} 100" stroke-linecap="round"/>
+    <text x="18" y="22" text-anchor="middle">${s.score}</text>`;
+  document.getElementById('rsLoss').innerHTML=
+    `<b>${inv} of your products are invisible</b> to AI assistants right now. That is roughly <b>$${s.lostPerMo} a month</b> in sales going to better-prepared competitors.`;
+  obGo(3);
+}
+
+// done message reflects chosen plan
+const _origObGo = obGo;
+obGo = function(n){
+  _origObGo(n);
+  if(n===5){
+    document.getElementById('doneMsg').textContent =
+      `Your ${PLAN_NAME[selectedPlan]} trial is live and Shelfie has started fixing your product data. We will email you when your first products go live in AI answers.`;
+  }
+};
+
+/* ---------- WIRE ALL CTAs TO THE FLOW ---------- */
+function goSim(){ openOb(); }   // hero + nav + pricing CTAs now launch onboarding
+
+renderChips(); renderAudit(); renderCode();
+document.getElementById('q').addEventListener('keydown',e=>{ if(e.key==='Enter') ask(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeOb(); });
+</script>
+</body>
+</html>
